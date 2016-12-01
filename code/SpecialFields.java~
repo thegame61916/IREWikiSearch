@@ -1,0 +1,76 @@
+package iiit.ire.miniproj.indexer;
+
+import iiit.ire.miniproj.indexerutils.Fields;
+import iiit.ire.miniproj.indexerutils.Regex;
+import iiit.ire.miniproj.indexerutils.Stemmer;
+import iiit.ire.miniproj.indexerutils.StopWords;
+
+
+public class SpecialFields {
+		
+	public static void stemAndAddWordToIndex(String content, String docId, Fields f){
+		content=content.trim();
+		if(!f.equals(Fields.title) && ((StopWords.stopWords.contains(content) || content.length()<=3)))
+			return;
+		Stemmer s = new Stemmer();
+		s.add(content.toCharArray(), content.length());
+		s.stem();
+		if(content.length()<=3)
+			return;
+		if(s.toString().equals("to") && f.equals(Fields.title))
+		System.out.println("I am here");
+		IndexWriter.addWordToIndex(s.toString(), docId, f);
+	}
+	public static void handleCategory(String content, String docId){
+		String[] str = Regex.patternSeparator.split(content.split(":")[1]);
+		for(String s:str){
+			stemAndAddWordToIndex(s, docId, Fields.category);
+		}
+	}
+	public static void handleInfoBox(String content, String docId){
+		String[] str = content.split("=");
+		int i= 0;
+		for(String s:str){
+			if(i%2 == 1){
+				String[] j = Regex.patternSeparator.split(s);
+				for(String k:j){
+					stemAndAddWordToIndex(k, docId, Fields.infobox);
+				}
+			}
+			i++;
+		}	
+	}
+	public static void handleExternalLinks(String content, String docId){
+		content = content.replaceAll("==External links==", "");
+		String[] str = Regex.patternSeparator.split(content);		   
+		   for(String s:str){
+			   stemAndAddWordToIndex(s.trim(), docId, Fields.links);
+		   }
+	}
+	public static void handleReferences(String content, String docId){
+		String[] str = content.split("=");
+		int i= 0;
+		for(String s:str){
+			if(i%2 == 1){
+				String[] j = Regex.patternSeparator.split(s);
+				for(String k:j){
+					stemAndAddWordToIndex(k, docId, Fields.references);
+				}
+			}
+			i++;
+		}
+	}
+	public static void handleTitle(String content, String docId){
+		content = content.replaceAll("[,.]", " ");
+		String[] str = Regex.patternSeparator.split(content);		   
+		   for(String s:str){
+			   stemAndAddWordToIndex(s, docId, Fields.title);
+		   }
+	}
+	public static void handleBody(String content, String docId){
+		String[] str = Regex.patternSeparator.split(content);
+		for(String s:str){
+			stemAndAddWordToIndex(s, docId, Fields.body);
+		}
+	}
+}
